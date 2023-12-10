@@ -1,38 +1,52 @@
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from bs4 import BeautifulSoup
+import requests #リクエストモジュールを使用
+from bs4 import BeautifulSoup #BeautifulSoup4をつかいHTMLの解析に使う
 
-def get_all_text_colors(url):
-    # Seleniumの設定
-    options = Options()
-    options.headless = True  # ヘッドレスモードでブラウザを起動
+def get_text_color_from_url(url, element_selector): #WEBページとCSSのソースファイルを取得する関数
+    try:
+        # ウェブページからHTMLを取得
+        response = requests.get(url) #responseに指定されたURLのHTMLを取得し格納
+        response.raise_for_status()  # HTTPプロトコルのエラーチェック
 
-    # Chromeドライバーのパスを指定
-    driver_path = '/path/to/chromedriver'  # あなたの環境に合わせて変更してください
+        # HTMLを解析
+        soup = BeautifulSoup(response.text, 'html.parser') #BeautifulSoupにてHTMLの解析
 
-    # Seleniumでブラウザを起動
-    with webdriver.Chrome(options=options) as driver:
-        # 指定したURLにアクセス
-        driver.get(url)
+        # 指定されたCSSセレクタで要素を取得
+        element = soup.select_one(element_selector) #CSSセレクタの取得、elementに格納
 
-        # ページのHTMLを取得する
-        html = driver.page_source
+        if element: #要素があるとき処理
+            # 取得した要素のHTMLを表示
+            print(f"取得した要素のHTML: {element}")
 
-        # BeautifulSoupを使ってHTMLを解析
-        soup = BeautifulSoup(html, 'html.parser')
+            # 要素のスタイルから色を取得
+            color = element.get('style') #要素のスタイル属性より色を取得
+            print(f"取得した色: {color}")
 
-        # ページ内のすべてのテキスト要素を取り出す
-        all_text_elements = soup.find_all(text=True)
+            # CSSファイルのURLを取得
+            css_file_url = None #CSSファイルの格納変数初期化
+            link_element = soup.select_one('link[rel="stylesheet"]') #CSSファイルの指定
+            if link_element:
+                css_file_url = link_element.get('href') #CSSファイルのURLを取得し格納
+                print(f"CSSファイルのURL: {css_file_url}")
 
-        # テキスト要素ごとにスタイルを表示する
-        for text_element in all_text_elements:
-            # 親要素をもとに、スタイル情報を取得
-            style = text_element.find_parents()[0].get('style') if text_element.find_parents() else None
-            print(f'Text: {text_element}\nStyle: {style}\n')
+                # CSSファイルの内容を取得
+                css_response = requests.get(css_file_url) #CSSファイルのリクエストU
+                css_response.raise_for_status() #CSSファイルのHTTPプロトコルエラーチェック
+                css_content = css_response.text #CSSファイルの内容を取得
+                print(f"CSSファイルの内容:\n{css_content}")
 
-# WebページのURLを指定
-url = 'https://scraping-for-beginner.herokuapp.com/ranking/'
+            return color
 
-# 関数を呼び出してすべてのテキストのスタイルを取得
-get_all_text_colors(url)
+        return None
 
+    except requests.exceptions.RequestException as e: #例外処理時にexceptブロック
+        print(f"Error: {e}")
+        return None
+
+# ウェブページのURLを指定
+url = 'https://appletools.blog/scraping-practice/'
+
+# 取得したい要素のCSSセレクタを指定　WEBページでの取得したいテキスト部分のCSSセレクタ
+element_selector = 'head'
+
+# 要素のスタイルから色を取得
+text_color = get_text_color_from_url(url, element_selector)
