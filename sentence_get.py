@@ -45,7 +45,7 @@ def get_text_color_from_url(url, element_selector): #WEBページとCSSのソー
 # ウェブページのURLを指定する①
 url = 'https://appletools.blog/scraping-practice/'
 
-# 取得したい要素のCSSセレクタを指定
+# 取得したい要素のCSSセレクタを指定②
 element_selector = 'head'
 
 # 要素のスタイルから色を取得
